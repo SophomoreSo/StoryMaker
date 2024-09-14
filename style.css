@@ -1,0 +1,95 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    padding: 20px;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Remove unnecessary scroll bar */
+}
+
+h1 {
+    margin: 0;
+    padding-bottom: 10px;
+}
+
+#ancestryContainer {
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.story-node {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.current {
+    background-color: #d0f0d0;
+}
+
+#storyContainer {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-bottom: 70px; /* Space for the fixed input at the bottom */
+}
+
+#inputContainer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+#inputWrapper {
+    display: flex;
+    align-items: center; /* Ensure button and input are vertically aligned */
+}
+
+#nodeInput {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#addNode {
+    margin-left: 10px;
+    padding: 10px 20px; /* Adjust padding for better button visibility */
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+#hintContainer {
+    margin-bottom: 5px; /* Space between hints and input */
+    font-size: 14px;
+    color: #777;
+}
+
+.message {
+    position: fixed;
+    top: 10px; /* Position message at the top of the page */
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
