@@ -7,15 +7,24 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Story Maker</h1>
-    <div id="ancestryContainer"></div>
-    <div id="storyContainer"></div>
+    <div id="sidebar">
+        <div id="chapterContainer"></div>
+    </div>
 
-    <div id="inputContainer">
-        <div id="hintContainer"></div> <!-- Hints are placed above the text input -->
-        <div id="inputWrapper">
-            <input type="text" id="nodeInput" placeholder="Enter node text or command" autocomplete="off" />
-            <button id="addNode">Enter</button>
+    <div id="mainContainer">
+        <div id="headerContainer">
+            <button id="toggleSidebar">&#10094;</button>
+            <h1>Story Maker</h1>
+        </div>
+        <div id="ancestryContainer"></div>
+        <div id="storyContainer"></div>
+
+        <div id="inputContainer">
+            <div id="hintContainer"></div>
+            <div id="inputWrapper">
+                <input type="text" id="nodeInput" placeholder="Enter node text or command" autocomplete="off" />
+                <button id="addNode">Enter</button>
+            </div>
         </div>
     </div>
 

@@ -1,9 +1,8 @@
-// Define the StoryNode class at the top of the script
 class StoryNode {
     constructor(title) {
         this.title = title;
         this.children = [];
-        this.current = false;  // Attribute to track the current node
+        this.current = false;
     }
 
     markCurrent() {
@@ -25,7 +24,7 @@ class StoryNode {
         };
 
         if (this.current) {
-            nodeData.current = true;  // Only include 'current' if it's true
+            nodeData.current = true;
         }
 
         return nodeData;
@@ -37,45 +36,33 @@ class StoryNode {
         node.children = json.children.map(childJson => StoryNode.fromJSON(childJson));
         return node;
     }
-}class StoryWriter {
+}
+
+class StoryWriter {
     constructor() {
-        this.storyNodes = [];
+        this.chapters = [];
+        this.currentChapterIndex = null;
         this.currentParent = null;
         this.nodeCounter = 0;
         this.nodesSinceLastSave = 0;
-        this.unsavedChanges = false; // Track if there are unsaved changes
-        this.commands = ["/new", "/load", "/save", "/delete", "/getparent"];
-        this.singleHint = null;
-        this.messageTimeout = null; // To track message timeout
-        this.currentMessage = null; // To track the current message element
-    }
-
-    createNewStory() {
-        if (this.unsavedChanges && !this.confirmDiscardChanges()) {
-            return;
-        }
-        this.storyNodes = [];
-        this.currentParent = new StoryNode("Root");
-        this.currentParent.markCurrent();
-        this.storyNodes.push(this.currentParent);
         this.unsavedChanges = false;
-        this.renderStory();
-        this.focusInput();
-    }
-
-    loadStory() {
-        if (this.unsavedChanges && !this.confirmDiscardChanges()) {
-            return;
-        }
-        this.showLoadModal();
+        this.commands = ["/new", "/load", "/save", "/delete", "/recent", "/getparent", "/exit", "/chapteradd"];
+        this.singleHint = null;
+        this.messageTimeout = null;
+        this.currentMessage = null;
     }
 
     addNode(text) {
+        if (!this.currentParent) {
+            this.showMessage("No chapter selected.", true);
+            return;
+        }
+
         const newNode = new StoryNode(text);
         this.currentParent.children.push(newNode);
         this.nodeCounter++;
         this.nodesSinceLastSave++;
-        this.unsavedChanges = true; // Mark changes as unsaved
+        this.unsavedChanges = true;
         this.renderStory();
         this.focusInput();
     }
@@ -109,9 +96,22 @@ class StoryNode {
                     this.showMessage("Invalid delete command. Usage: /delete [number]", true);
                 }
                 break;
+            case '/chapteradd':
+                this.addChapter();
+                this.showMessage("New chapter added!");
+                break;
+            case '/recent':
+                this.moveToCurrent();
+                break;
             case '/getparent':
                 this.getAncestryAndCopyToClipboard();
                 this.showMessage("Ancestry copied to clipboard!");
+                break;
+            case '/exit':
+                if (this.unsavedChanges && !this.confirmDiscardChanges()) {
+                    return;
+                }
+                this.showMessage("Exit command not implemented in this interface.", true);
                 break;
             default:
                 this.showMessage(`Unknown command: ${command}`, true);
@@ -120,10 +120,181 @@ class StoryNode {
         this.focusInput();
     }
 
+    createNewStory() {
+        if (this.unsavedChanges && !this.confirmDiscardChanges()) {
+            return;
+        }
+
+        this.chapters = [];
+        this.currentChapterIndex = null;
+        this.currentParent = null;
+
+        this.addChapter();
+        this.selectChapter(0);
+
+        this.unsavedChanges = false;
+        this.renderStory();
+        this.renderChapters();
+        this.focusInput();
+        this.showMessage("New story created with one default chapter.");
+    }
+
+    addChapter() {
+        const newRootNode = new StoryNode(`Chapter`);
+        this.chapters.push(newRootNode);
+        this.renderChapters();
+    }
+
+    selectChapter(index) {
+        if (index >= 0 && index < this.chapters.length) {
+            this.currentChapterIndex = index;
+            this.currentParent = this.chapters[index];
+            this.renderStory();
+            this.showMessage(`Chapter ${index + 1} loaded.`);
+        }
+    }
+
+    deleteChapter(index) {
+        const confirmDelete = confirm("Are you sure you want to delete this chapter?");
+        if (!confirmDelete) {
+            return;
+        }
+
+        if (index >= 0 && index < this.chapters.length) {
+            this.chapters.splice(index, 1);
+
+            if (this.currentChapterIndex >= this.chapters.length) {
+                this.currentChapterIndex = this.chapters.length - 1;
+            }
+
+            if (this.currentChapterIndex >= 0) {
+                this.selectChapter(this.currentChapterIndex);
+            } else {
+                this.currentParent = null;
+                this.renderStory();
+            }
+
+            this.renderChapters();
+            this.showMessage(`Chapter ${index + 1} deleted.`);
+        }
+    }
+
+    renameChapter(index, newName) {
+        if (index >= 0 && index < this.chapters.length) {
+            this.chapters[index].title = newName;
+            this.renderChapters();
+            this.showMessage(`Chapter ${index + 1} renamed to "${newName}".`);
+        }
+    }
+
+    swapChapters(fromIndex, toIndex) {
+        if (fromIndex >= 0 && toIndex >= 0 && fromIndex < this.chapters.length && toIndex < this.chapters.length) {
+            const temp = this.chapters[fromIndex];
+            this.chapters[fromIndex] = this.chapters[toIndex];
+            this.chapters[toIndex] = temp;
+
+            if (this.currentChapterIndex === fromIndex) {
+                this.currentChapterIndex = toIndex;
+            } else if (this.currentChapterIndex === toIndex) {
+                this.currentChapterIndex = fromIndex;
+            }
+
+            this.renderChapters();
+            this.renderStory();
+        }
+    }
+
+    renderChapters() {
+        const chapterContainer = document.getElementById('chapterContainer');
+        chapterContainer.innerHTML = '';
+
+        this.chapters.forEach((chapter, index) => {
+            const chapterDiv = document.createElement('div');
+            chapterDiv.className = 'chapter';
+            chapterDiv.draggable = true;
+
+            const dragHandle = document.createElement('span');
+            dragHandle.className = 'drag-handle';
+            dragHandle.textContent = '☰';
+
+            const editIcon = document.createElement('img');
+            editIcon.src = 'edit.png'; // Path to your icon file
+            editIcon.className = 'edit-icon';
+            editIcon.addEventListener('click', (event) => {
+                event.stopPropagation();
+                this.showRenameInput(index);
+            });
+
+            const chapterTitle = document.createElement('span');
+            chapterTitle.textContent = `${index + 1}. ${chapter.title}`;
+            chapterTitle.addEventListener('click', () => this.selectChapter(index));
+
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-chapter';
+            deleteButton.textContent = 'x';
+            deleteButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                this.deleteChapter(index);
+            });
+
+            chapterDiv.appendChild(dragHandle);
+            chapterDiv.appendChild(editIcon);
+            chapterDiv.appendChild(chapterTitle);
+            chapterDiv.appendChild(deleteButton);
+
+            chapterDiv.addEventListener('dragstart', (event) => {
+                event.dataTransfer.setData('text/plain', index);
+            });
+
+            chapterDiv.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                chapterDiv.style.backgroundColor = '#f0f0f0'; 
+            });
+
+            chapterDiv.addEventListener('dragleave', () => {
+                chapterDiv.style.backgroundColor = ''; 
+            });
+
+            chapterDiv.addEventListener('drop', (event) => {
+                event.preventDefault();
+                const fromIndex = event.dataTransfer.getData('text/plain');
+                this.swapChapters(parseInt(fromIndex), index);
+                chapterDiv.style.backgroundColor = ''; 
+            });
+
+            chapterContainer.appendChild(chapterDiv);
+        });
+    }
+
+    showRenameInput(index) {
+        const chapterContainer = document.getElementById('chapterContainer');
+        const chapterDiv = chapterContainer.children[index];
+
+        const inputField = document.createElement('input');
+        inputField.type = 'text';
+        inputField.value = this.chapters[index].title;
+
+        inputField.addEventListener('blur', () => {
+            this.renameChapter(index, inputField.value);
+        });
+
+        inputField.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                this.renameChapter(index, inputField.value);
+            } else if (event.key === 'Escape') {
+                this.renderChapters();
+            }
+        });
+
+        chapterDiv.innerHTML = '';
+        chapterDiv.appendChild(inputField);
+        inputField.focus();
+    }
+
     deleteNode(index) {
         if (index >= 0 && index < this.currentParent.children.length) {
             const deletedNode = this.currentParent.children.splice(index, 1)[0];
-            this.unsavedChanges = true; // Mark changes as unsaved
+            this.unsavedChanges = true;
             this.renderStory();
         } else {
             this.showMessage("Invalid index. Please enter a valid number.", true);
@@ -132,7 +303,7 @@ class StoryNode {
     }
 
     saveStory() {
-        const json = JSON.stringify(this.storyNodes[0], null, 2);
+        const json = JSON.stringify(this.chapters.map(chapter => chapter.toJSON()), null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -142,15 +313,18 @@ class StoryNode {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        this.unsavedChanges = false; // Mark changes as saved
+        this.unsavedChanges = false;
         this.focusInput();
     }
 
     loadStoryFromJSON(json) {
-        const rootNode = StoryNode.fromJSON(JSON.parse(json));
-        this.storyNodes = [rootNode];
-        this.currentParent = this.findCurrentNode(rootNode);
-        this.unsavedChanges = false; // Assume loaded story is the current state
+        const chapters = JSON.parse(json).map(chapterJson => StoryNode.fromJSON(chapterJson));
+        this.chapters = chapters;
+        if (chapters.length > 0) {
+            this.selectChapter(0);
+        }
+        this.unsavedChanges = false;
+        this.renderChapters();
         this.renderStory();
         this.focusInput();
     }
@@ -185,7 +359,7 @@ class StoryNode {
         modal.style.justifyContent = 'center';
         modal.style.alignItems = 'center';
         modal.style.zIndex = '1000';
-    
+
         const dropArea = document.createElement('div');
         dropArea.style.width = '300px';
         dropArea.style.height = '200px';
@@ -201,7 +375,7 @@ class StoryNode {
         dropArea.style.textAlign = 'center';
         dropArea.style.padding = '10px';
         dropArea.style.cursor = 'pointer';
-    
+
         const closeButton = document.createElement('button');
         closeButton.textContent = 'x';
         closeButton.style.position = 'absolute';
@@ -213,19 +387,19 @@ class StoryNode {
         closeButton.style.cursor = 'pointer';
         closeButton.style.color = '#888';
         closeButton.addEventListener('click', (event) => {
-            event.stopPropagation();  // Prevent the event from bubbling up to the dropArea
+            event.stopPropagation();
             document.body.removeChild(modal);
         });
-    
+
         dropArea.addEventListener('dragover', (event) => {
             event.preventDefault();
             dropArea.style.borderColor = '#4CAF50';
         });
-    
+
         dropArea.addEventListener('dragleave', () => {
             dropArea.style.borderColor = '#ccc';
         });
-    
+
         dropArea.addEventListener('drop', (event) => {
             event.preventDefault();
             dropArea.style.borderColor = '#ccc';
@@ -233,7 +407,7 @@ class StoryNode {
             this.handleFile(file);
             document.body.removeChild(modal);
         });
-    
+
         dropArea.addEventListener('click', () => {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -248,12 +422,11 @@ class StoryNode {
             fileInput.click();
             document.body.removeChild(fileInput);
         });
-    
-        dropArea.appendChild(closeButton); // Append close button to dropArea
+
+        dropArea.appendChild(closeButton);
         modal.appendChild(dropArea);
         document.body.appendChild(modal);
     }
-    
 
     handleFile(file) {
         const reader = new FileReader();
@@ -266,6 +439,11 @@ class StoryNode {
             }
         };
         reader.readAsText(file);
+    }
+
+    moveToCurrent() {
+        this.showMessage("Move to current feature not implemented yet.", true);
+        this.focusInput();
     }
 
     getAncestryAndCopyToClipboard() {
@@ -290,7 +468,7 @@ class StoryNode {
             }
         } else if (index > 0 && index <= this.currentParent.children.length) {
             this.currentParent.removeCurrent();
-            this.currentParent = this.currentParent.children[index - 1]; // Adjusting for 0-based index
+            this.currentParent = this.currentParent.children[index - 1];
             this.currentParent.markCurrent();
             this.renderStory();
             this.showMessage(`Moved to node ${index}.`);
@@ -311,7 +489,7 @@ class StoryNode {
     }
 
     findParent(child) {
-        for (const node of this.storyNodes) {
+        for (const node of this.chapters) {
             if (node.children.includes(child)) {
                 return node;
             }
@@ -346,6 +524,7 @@ class StoryNode {
     }
 
     renderChildren(node, container) {
+        if (!node) return;
         node.children.forEach((child, index) => {
             const nodeElement = document.createElement('div');
             nodeElement.className = 'story-node';
@@ -362,7 +541,7 @@ class StoryNode {
         hintContainer.innerHTML = '';
 
         const parts = inputValue.split(" ");
-        const commandPart = parts[0];  // First part of the command
+        const commandPart = parts[0];
 
         if (commandPart.startsWith("/")) {
             const matchingCommands = this.commands
@@ -389,7 +568,6 @@ class StoryNode {
     }
 
     showMessage(message, isError = false) {
-        // Remove the current message if it exists
         if (this.currentMessage) {
             this.currentMessage.remove();
             clearTimeout(this.messageTimeout);
@@ -407,16 +585,16 @@ class StoryNode {
         }
         document.body.appendChild(messageContainer);
 
-        this.currentMessage = messageContainer; // Track the current message
+        this.currentMessage = messageContainer;
 
         this.messageTimeout = setTimeout(() => {
             messageContainer.remove();
-            this.currentMessage = null; // Clear the reference after removal
-        }, 3000); // Message disappears after 3 seconds
+            this.currentMessage = null;
+        }, 3000);
     }
 }
 
-// Initialize the StoryWriter instance and ensure focus on input
+// Initialize the StoryWriter instance
 const storyWriter = new StoryWriter();
 
 document.getElementById('nodeInput').addEventListener('input', (event) => {
@@ -444,14 +622,29 @@ document.getElementById('nodeInput').addEventListener('keydown', (event) => {
         nodeInput.value = "";
         document.getElementById('hintContainer').innerHTML = '';  // Clear hints after executing the command
     } else if (event.key === 'Tab' && storyWriter.singleHint) {
-        event.preventDefault(); // Prevent the default tab behavior
+        event.preventDefault();
         document.getElementById('nodeInput').value = storyWriter.singleHint;
-        storyWriter.updateHints(storyWriter.singleHint); // Update hints to reflect the new state
+        storyWriter.updateHints(storyWriter.singleHint);
     }
-    storyWriter.focusInput();  // Ensure input is focused
+    storyWriter.focusInput();
 });
 
-// Focus the input when the page loads
+document.getElementById('toggleSidebar').addEventListener('click', function () {
+    const sidebar = document.getElementById('sidebar');
+
+    if (sidebar.style.width === '0px') {
+        // Expand the sidebar
+        sidebar.style.width = '230px';
+        this.innerHTML = '&#10094;'; // Left arrow
+    } else {
+        // Collapse the sidebar
+        sidebar.style.width = '0px';
+        this.innerHTML = '&#10095;'; // Right arrow
+    }
+});
+
+
+// Ensure the input is focused when the page loads
 window.onload = function() {
     storyWriter.focusInput();
 };
