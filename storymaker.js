@@ -207,16 +207,16 @@ class StoryWriter {
     renderChapters() {
         const chapterContainer = document.getElementById('chapterContainer');
         chapterContainer.innerHTML = '';
-
+    
         this.chapters.forEach((chapter, index) => {
             const chapterDiv = document.createElement('div');
             chapterDiv.className = 'chapter';
             chapterDiv.draggable = true;
-
+    
             const dragHandle = document.createElement('span');
             dragHandle.className = 'drag-handle';
             dragHandle.textContent = '☰';
-
+    
             const editIcon = document.createElement('img');
             editIcon.src = 'edit.png'; // Path to your icon file
             editIcon.className = 'edit-icon';
@@ -224,11 +224,11 @@ class StoryWriter {
                 event.stopPropagation();
                 this.showRenameInput(index);
             });
-
+    
             const chapterTitle = document.createElement('span');
             chapterTitle.textContent = `${index + 1}. ${chapter.title}`;
             chapterTitle.addEventListener('click', () => this.selectChapter(index));
-
+    
             const deleteButton = document.createElement('button');
             deleteButton.className = 'delete-chapter';
             deleteButton.textContent = 'x';
@@ -236,32 +236,65 @@ class StoryWriter {
                 event.stopPropagation();
                 this.deleteChapter(index);
             });
-
+    
             chapterDiv.appendChild(dragHandle);
             chapterDiv.appendChild(editIcon);
             chapterDiv.appendChild(chapterTitle);
             chapterDiv.appendChild(deleteButton);
-
+    
+            // Existing drag and drop event listeners
             chapterDiv.addEventListener('dragstart', (event) => {
                 event.dataTransfer.setData('text/plain', index);
             });
-
+    
             chapterDiv.addEventListener('dragover', (event) => {
                 event.preventDefault();
                 chapterDiv.style.backgroundColor = '#f0f0f0'; 
             });
-
+    
             chapterDiv.addEventListener('dragleave', () => {
                 chapterDiv.style.backgroundColor = ''; 
             });
-
+    
             chapterDiv.addEventListener('drop', (event) => {
                 event.preventDefault();
                 const fromIndex = event.dataTransfer.getData('text/plain');
                 this.swapChapters(parseInt(fromIndex), index);
                 chapterDiv.style.backgroundColor = ''; 
             });
-
+    
+            // Add touch event listeners for mobile support
+            chapterDiv.addEventListener('touchstart', (event) => {
+                event.preventDefault();
+                event.target.style.opacity = '0.5';  // Visually indicate dragging
+                event.dataTransfer = {
+                    setData: (type, value) => event.target.dataset.dragIndex = value
+                };
+                event.dataTransfer.setData('text/plain', index);
+            });
+    
+            chapterDiv.addEventListener('touchmove', (event) => {
+                event.preventDefault();
+                const touch = event.touches[0];
+                const overElement = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (overElement && overElement.classList.contains('chapter')) {
+                    overElement.style.backgroundColor = '#f0f0f0';
+                }
+            });
+    
+            chapterDiv.addEventListener('touchend', (event) => {
+                event.preventDefault();
+                const touch = event.changedTouches[0];
+                const dropElement = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (dropElement && dropElement.classList.contains('chapter')) {
+                    const fromIndex = event.target.dataset.dragIndex;
+                    const toIndex = dropElement.dataset.index;
+                    this.swapChapters(parseInt(fromIndex), parseInt(toIndex));
+                }
+                event.target.style.opacity = '1';  // Reset opacity after drag
+                chapterDiv.style.backgroundColor = ''; 
+            });
+    
             chapterContainer.appendChild(chapterDiv);
         });
     }
@@ -640,6 +673,33 @@ document.getElementById('toggleSidebar').addEventListener('click', function () {
         // Collapse the sidebar
         sidebar.style.width = '0px';
         this.innerHTML = '&#10095;'; // Right arrow
+    }
+});
+
+document.getElementById('addNode').addEventListener('click', () => {
+    const nodeInput = document.getElementById('nodeInput');
+    const inputValue = nodeInput.value.trim();
+
+    if (inputValue.startsWith("/")) {
+        // Handle commands
+        storyWriter.executeCommand(inputValue);
+    } else if (!isNaN(inputValue) && inputValue !== "") {
+        // Move to a node by index
+        storyWriter.moveToNode(parseInt(inputValue, 10));
+    } else if (inputValue !== "") {
+        // Add a new node
+        storyWriter.addNode(inputValue);
+    }
+
+    // Clear the input field after processing
+    nodeInput.value = "";
+    document.getElementById('hintContainer').innerHTML = '';  // Clear hints after executing the command
+});
+
+// Also, ensure pressing the Enter key triggers the button click
+document.getElementById('nodeInput').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        document.getElementById('addNode').click(); // Trigger the addNode button click
     }
 });
 
