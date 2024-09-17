@@ -46,7 +46,7 @@ class StoryWriter {
         this.nodeCounter = 0;
         this.nodesSinceLastSave = 0;
         this.unsavedChanges = false;
-        this.commands = ["/new", "/load", "/save", "/delete", "/recent", "/getparent", "/exit", "/chapteradd"];
+        this.commands = ["/new", "/load", "/save", "/delete", "/recent", "/getparent", "/exit", "/chapteradd", "/brainstorm"];
         this.singleHint = null;
         this.messageTimeout = null;
         this.currentMessage = null;
@@ -77,7 +77,7 @@ class StoryWriter {
                 this.showMessage("New story created!");
                 break;
             case '/load':
-                this.loadStory();
+                this.showLoadModal();
                 break;
             case '/save':
                 this.saveStory();
@@ -106,6 +106,10 @@ class StoryWriter {
             case '/getparent':
                 this.getAncestryAndCopyToClipboard();
                 this.showMessage("Ancestry copied to clipboard!");
+                break;
+            case '/brainstorm':
+                this.copyChildrenToClipboard();
+                this.showMessage("Brainstorm list copied to clipboard!");
                 break;
             case '/exit':
                 if (this.unsavedChanges && !this.confirmDiscardChanges()) {
@@ -218,7 +222,7 @@ class StoryWriter {
             dragHandle.textContent = '☰';
     
             const editIcon = document.createElement('img');
-            editIcon.src = 'edit.png'; // Path to your icon file
+            editIcon.src = 'edit.png';
             editIcon.className = 'edit-icon';
             editIcon.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -242,7 +246,6 @@ class StoryWriter {
             chapterDiv.appendChild(chapterTitle);
             chapterDiv.appendChild(deleteButton);
     
-            // Existing drag and drop event listeners
             chapterDiv.addEventListener('dragstart', (event) => {
                 event.dataTransfer.setData('text/plain', index);
             });
@@ -263,39 +266,25 @@ class StoryWriter {
                 chapterDiv.style.backgroundColor = ''; 
             });
     
-            // Add touch event listeners for mobile support
-            chapterDiv.addEventListener('touchstart', (event) => {
-                event.preventDefault();
-                event.target.style.opacity = '0.5';  // Visually indicate dragging
-                event.dataTransfer = {
-                    setData: (type, value) => event.target.dataset.dragIndex = value
-                };
-                event.dataTransfer.setData('text/plain', index);
-            });
-    
-            chapterDiv.addEventListener('touchmove', (event) => {
-                event.preventDefault();
-                const touch = event.touches[0];
-                const overElement = document.elementFromPoint(touch.clientX, touch.clientY);
-                if (overElement && overElement.classList.contains('chapter')) {
-                    overElement.style.backgroundColor = '#f0f0f0';
-                }
-            });
-    
-            chapterDiv.addEventListener('touchend', (event) => {
-                event.preventDefault();
-                const touch = event.changedTouches[0];
-                const dropElement = document.elementFromPoint(touch.clientX, touch.clientY);
-                if (dropElement && dropElement.classList.contains('chapter')) {
-                    const fromIndex = event.target.dataset.dragIndex;
-                    const toIndex = dropElement.dataset.index;
-                    this.swapChapters(parseInt(fromIndex), parseInt(toIndex));
-                }
-                event.target.style.opacity = '1';  // Reset opacity after drag
-                chapterDiv.style.backgroundColor = ''; 
-            });
+            // The DragDropTouch polyfill will handle the touch events, no need for manual touch event handlers.
     
             chapterContainer.appendChild(chapterDiv);
+        });
+    }
+    
+
+    copyChildrenToClipboard() {
+        if (!this.currentParent || this.currentParent.children.length === 0) {
+            this.showMessage("No children to copy.", true);
+            return;
+        }
+
+        let textToCopy = this.currentParent.children.map((child, index) => `${index + 1}. ${child.getTitle()}`).join("\n");
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            this.showMessage("Brainstorm list copied to clipboard!");
+        }).catch(err => {
+            this.showMessage("Failed to copy brainstorm list.", true);
         });
     }
 
@@ -585,7 +574,6 @@ class StoryWriter {
             } else {
                 this.singleHint = null;
             }
-
             matchingCommands.forEach(cmd => {
                 const hintElement = document.createElement('div');
                 hintElement.textContent = cmd + (parts.length > 1 ? " " + parts.slice(1).join(" ") : "");
@@ -605,7 +593,6 @@ class StoryWriter {
             this.currentMessage.remove();
             clearTimeout(this.messageTimeout);
         }
-
         const messageContainer = document.createElement('div');
         messageContainer.className = 'message';
         messageContainer.textContent = message;
@@ -627,7 +614,6 @@ class StoryWriter {
     }
 }
 
-// Initialize the StoryWriter instance
 const storyWriter = new StoryWriter();
 
 document.getElementById('nodeInput').addEventListener('input', (event) => {
@@ -653,7 +639,7 @@ document.getElementById('nodeInput').addEventListener('keydown', (event) => {
         }
 
         nodeInput.value = "";
-        document.getElementById('hintContainer').innerHTML = '';  // Clear hints after executing the command
+        document.getElementById('hintContainer').innerHTML = '';
     } else if (event.key === 'Tab' && storyWriter.singleHint) {
         event.preventDefault();
         document.getElementById('nodeInput').value = storyWriter.singleHint;
@@ -666,13 +652,11 @@ document.getElementById('toggleSidebar').addEventListener('click', function () {
     const sidebar = document.getElementById('sidebar');
 
     if (sidebar.style.width === '0px') {
-        // Expand the sidebar
         sidebar.style.width = '230px';
-        this.innerHTML = '&#10094;'; // Left arrow
+        this.innerHTML = '&#10094;';
     } else {
-        // Collapse the sidebar
         sidebar.style.width = '0px';
-        this.innerHTML = '&#10095;'; // Right arrow
+        this.innerHTML = '&#10095;';
     }
 });
 
@@ -681,30 +665,22 @@ document.getElementById('addNode').addEventListener('click', () => {
     const inputValue = nodeInput.value.trim();
 
     if (inputValue.startsWith("/")) {
-        // Handle commands
         storyWriter.executeCommand(inputValue);
     } else if (!isNaN(inputValue) && inputValue !== "") {
-        // Move to a node by index
         storyWriter.moveToNode(parseInt(inputValue, 10));
     } else if (inputValue !== "") {
-        // Add a new node
         storyWriter.addNode(inputValue);
     }
-
-    // Clear the input field after processing
     nodeInput.value = "";
-    document.getElementById('hintContainer').innerHTML = '';  // Clear hints after executing the command
+    document.getElementById('hintContainer').innerHTML = ''; 
 });
 
-// Also, ensure pressing the Enter key triggers the button click
 document.getElementById('nodeInput').addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
-        document.getElementById('addNode').click(); // Trigger the addNode button click
+        document.getElementById('addNode').click();
     }
 });
 
-
-// Ensure the input is focused when the page loads
 window.onload = function() {
     storyWriter.focusInput();
 };
