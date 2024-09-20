@@ -54,6 +54,28 @@ class StoryWriter {
         this.historyLimit = 10;
 
         this.initTitleEdit();
+        // Start with a new project when the page loads
+        window.addEventListener('load', () => {
+            this.createNewStory(); // Automatically start a new project
+        });
+
+        // Focus the text input when "/" is pressed
+        document.addEventListener('keydown', (event) => {
+            if (event.key === '/') {
+                event.preventDefault(); // Prevent the default "/" behavior
+                const inputField = document.getElementById('nodeInput');
+                if (inputField) {
+                    inputField.focus(); // Focus on the input field
+                }
+            }
+        });
+
+        const addChapterButton = document.getElementById('addChapterButton');
+        if (addChapterButton) {
+            addChapterButton.addEventListener('click', () => {
+                this.addChapter();
+            });
+        }
     }
     initTitleEdit() {
         const storyTitleElement = document.getElementById('storyTitle');
@@ -201,7 +223,7 @@ class StoryWriter {
         this.renderStory();
         this.renderChapters();
         this.focusInput();
-        this.showMessage("New story created with one default chapter.");
+        this.showMessage("New story created.");
     }
 
     addChapter() {
@@ -686,7 +708,8 @@ class StoryWriter {
         ancestry.forEach((node, index) => {
             const ancestryElement = document.createElement('span');
             ancestryElement.textContent = node.getTitle();
-            ancestryElement.style.cursor = 'pointer';
+            ancestryElement.classList.add('ancestry-node');
+
             ancestryElement.addEventListener('click', () => this.moveToNodeByReference(node));
 
             ancestryContainer.appendChild(ancestryElement);
@@ -843,6 +866,16 @@ document.getElementById('addNode').addEventListener('click', () => {
 document.getElementById('nodeInput').addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         document.getElementById('addNode').click();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === '/') {
+        event.preventDefault(); // Prevent the default behavior of "/"
+        const inputField = document.getElementById('nodeInput');
+        if (inputField) {
+            inputField.focus(); // Focus on the input field
+        }
     }
 });
 

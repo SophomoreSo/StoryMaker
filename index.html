@@ -8,22 +8,26 @@
 </head>
 <body>
     <div id="sidebar">
+        <h1 id="storyTitle">Title</h1>
+
         <div id="chapterContainer"></div>
+        <button id="addChapterButton">+</button> <!-- Button to add a new chapter -->
     </div>
 
     <div id="mainContainer">
         <div id="headerContainer">
             <button id="toggleSidebar">&#10094;</button>
-            <h1 id="storyTitle">Title</h1>
+            <div id="titleContainer">
+                <div id="ancestryContainer"></div> <!-- Ancestry now placed below title -->
+            </div>
         </div>
-        <div id="ancestryContainer"></div>
+
         <div id="storyContainer"></div>
 
         <div id="inputContainer">
             <div id="hintContainer"></div>
             <div id="inputWrapper">
                 <input type="text" id="nodeInput" placeholder="Enter node text or command" autocomplete="off" />
-                
                 <button id="addNode">Enter</button>
             </div>
         </div>
