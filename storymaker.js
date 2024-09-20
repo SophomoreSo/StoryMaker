@@ -52,7 +52,63 @@ class StoryWriter {
         this.currentMessage = null;
         this.nodeHistory = [];
         this.historyLimit = 10;
+
+        this.initTitleEdit();
     }
+    initTitleEdit() {
+        const storyTitleElement = document.getElementById('storyTitle');
+
+        storyTitleElement.addEventListener('click', () => {
+            const inputField = document.createElement('input');
+            inputField.type = 'text';
+            inputField.value = this.storyTitle;
+            inputField.id = 'titleInput';
+            inputField.classList.add('title-edit-input');
+
+            inputField.addEventListener('blur', () => {
+                this.saveNewTitle(inputField.value);
+            });
+
+            inputField.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    this.saveNewTitle(inputField.value);
+                } else if (event.key === 'Escape') {
+                    this.renderTitle(); // Cancel the edit
+                }
+            });
+
+            storyTitleElement.replaceWith(inputField);
+            inputField.focus();
+        });
+    }
+
+    // Save the new title
+    saveNewTitle(newTitle) {
+        this.storyTitle = newTitle;
+        this.unsavedChanges = true; // Mark as unsaved changes
+        this.renderTitle();
+    }
+
+    renderTitle() {
+        const titleInput = document.getElementById('titleInput'); // Check for the input field (during editing)
+        const titleElement = document.getElementById('storyTitle'); // Check for the current title element (not editing)
+    
+        // Create a new h1 element for the title
+        const newTitleElement = document.createElement('h1');
+        newTitleElement.id = 'storyTitle';
+        newTitleElement.textContent = this.storyTitle;
+    
+        // Replace the appropriate element (input if it's being edited, title if it's displayed)
+        if (titleInput) {
+            titleInput.replaceWith(newTitleElement); // If we're in edit mode, replace the input
+        } else if (titleElement) {
+            titleElement.replaceWith(newTitleElement); // Otherwise, replace the existing title element
+        }
+    
+        // Re-initialize the click event for editing
+        this.initTitleEdit();
+    }
+    
 
     addNode(text) {
         if (!this.currentParent) {
@@ -335,7 +391,12 @@ class StoryWriter {
     }
 
     saveStory() {
-        const json = JSON.stringify(this.chapters.map(chapter => chapter.toJSON()), null, 2);
+        const storyData = {
+            title: this.storyTitle,
+            chapters: this.chapters.map(chapter => chapter.toJSON()) // Assuming chapters are serialized this way
+        };
+
+        const json = JSON.stringify(storyData, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -345,21 +406,43 @@ class StoryWriter {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+
         this.unsavedChanges = false;
-        this.focusInput();
     }
 
     loadStoryFromJSON(json) {
-        const chapters = JSON.parse(json).map(chapterJson => StoryNode.fromJSON(chapterJson));
-        this.chapters = chapters;
-        if (chapters.length > 0) {
-            this.selectChapter(0);
+        try {
+            const data = JSON.parse(json); // Parse the JSON
+    
+            // Extract the story title and chapters
+            this.storyTitle = data.title || "Untitled Story";
+            this.chapters = data.chapters.map(chapterJson => StoryNode.fromJSON(chapterJson));
+
+            //print the data
+            console.log(data);
+            console.log(this.storyTitle);
+            console.log(this.chapters);
+    
+            // Render the title and the first chapter (if any chapters exist)
+            this.renderTitle();
+            
+
+            if (this.chapters.length > 0) {
+                this.selectChapter(0); // Select the first chapter by default
+            }
+    
+            this.unsavedChanges = false;
+            this.renderChapters();
+            this.renderStory();
+            this.focusInput();
+    
+            this.showMessage("Story loaded successfully!");
+        } catch (error) {
+            this.showMessage("Failed to load story: Invalid JSON format.", true);
         }
-        this.unsavedChanges = false;
-        this.renderChapters();
-        this.renderStory();
-        this.focusInput();
     }
+    
+    
 
     confirmDiscardChanges() {
         return confirm("You have unsaved changes. Do you want to proceed without saving?");

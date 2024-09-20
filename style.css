@@ -44,7 +44,14 @@ body {
 #headerContainer {
     display: flex;
     align-items: center;
-    margin-bottom: 5px; /* Reduced margin */
+    justify-content: flex-start;
+    padding: 10px;
+    background-color: white;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 #toggleSidebar {
@@ -55,14 +62,14 @@ body {
     cursor: pointer;
     text-align: center;
     font-size: 20px;
+    margin-right: 10px;
 }
 
-/* Chapter styles */
 .chapter {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: 8px; /* Reduced padding */
+    padding: 8px;
     margin-bottom: 5px;
     cursor: pointer;
     border-radius: 8px;
@@ -103,30 +110,36 @@ body {
 
 h1 {
     margin: 0;
-    font-size: 20px; /* Reduced font size */
+    font-size: 24px;
     font-weight: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
 }
 
 #mainContainer {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    padding: 10px; /* Reduced padding */
     overflow: hidden;
     transition: margin-left 0.3s ease;
+    margin-top: 60px;
 }
 
 #ancestryContainer {
-    margin-bottom: 10px; /* Reduced margin */
     font-weight: bold;
+    margin-top: 5px;
+    margin-left: 20px;
 }
 
 .story-node {
-    margin: 5px 0; /* Reduced margin */
-    padding: 8px; /* Reduced padding */
+    margin: 5px 0;
+    padding: 8px;
     background-color: #fff;
     border: 1px solid #ccc;
     border-radius: 5px;
+    margin-left: 20px;
 }
 
 .current {
@@ -136,19 +149,22 @@ h1 {
 #storyContainer {
     flex-grow: 1;
     overflow-y: auto;
-    padding-bottom: 50px; /* Reduced space for the fixed input at the bottom */
+    padding-bottom: 50px;
 }
 
 #inputContainer {
-    position: fixed; /* Fix to the bottom of the viewport */
-    bottom: 0; /* Stick to the bottom */
-    width: 85%; /* Make it stretch across the entire width */
-    background-color: white; /* Ensure the background is visible */
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* Add shadow for visibility */
-    padding: 10px; /* Provide some padding for the input */
-    z-index: 1000; /* Ensure it's on top of other elements */
+    bottom: 0;
+    background-color: white;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    padding: 10px;
+    z-index: 1000;
+    transition: left 0.3s ease, width 0.3s ease; /* Smooth transition when sidebar collapses */
 }
 
+#inputContainer.collapsed {
+    left: 0; /* Align with the page when sidebar is collapsed */
+    width: 100%; /* Full width when sidebar is collapsed */
+}
 
 #inputWrapper {
     display: flex;
@@ -157,10 +173,11 @@ h1 {
 
 #nodeInput {
     flex-grow: 1;
-    padding: 8px; /* Reduced padding */
-    font-size: 14px; /* Reduced font size */
+    padding: 8px;
+    font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 5px;
+    
 }
 
 #addNode {
@@ -183,12 +200,12 @@ h1 {
 
 .message {
     position: fixed;
-    top: 5px; /* Reduced vertical space */
+    top: 5px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 8px 16px; /* Reduced padding */
+    padding: 8px 16px;
     border-radius: 5px;
-    font-size: 14px; /* Reduced font size */
+    font-size: 14px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 1000;
     opacity: 0.9;
