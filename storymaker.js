@@ -322,7 +322,12 @@ class StoryWriter {
         if (index >= 0 && index < this.currentParent.children.length) {
             const deletedNode = this.currentParent.children.splice(index, 1)[0];
             this.unsavedChanges = true;
+
+            // Remove the deleted node from nodeHistory
+            this.nodeHistory = this.nodeHistory.filter(node => node !== deletedNode);
+
             this.renderStory();
+            this.showMessage(`Node ${index + 1} deleted.`);
         } else {
             this.showMessage("Invalid index. Please enter a valid number.", true);
         }
@@ -503,15 +508,32 @@ class StoryWriter {
     }
 
     moveToPreviousNode() {
-        if (this.nodeHistory.length > 0) {
+        while (this.nodeHistory.length > 0) {
             const previousNode = this.nodeHistory.pop();
-            this.currentParent = previousNode;
-            this.renderStory();
-            this.showMessage("Moved to the previous node.");
-        } else {
-            this.showMessage("No previous node to go back to.", true);
+
+            // Check if the node still exists (i.e., it hasn't been deleted)
+            if (this.isNodeValid(previousNode)) {
+                this.currentParent = previousNode;
+                this.renderStory();
+                this.showMessage(`Moved to previous node: ${previousNode.getTitle()}`);
+                return;
+            }
         }
+
+        this.showMessage("No previous valid node to go back to.", true);
     }
+
+    isNodeValid(node) {
+        if (!node) return false;
+
+        // Check if the node is still part of its parent's children
+        const parent = this.findParent(node);
+        if (parent && parent.children.includes(node)) {
+            return true;
+        }
+        return false;
+    }
+
 
     // Example method for moving to a new node (push the current node to history)
     moveToNode(index) {

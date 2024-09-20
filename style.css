@@ -5,13 +5,13 @@ body {
     margin: 0;
     display: flex;
     height: 100vh;
-    position: relative; /* Ensure button stays relative to the body */
+    position: relative;
 }
 
 #chapterContainer {
     width: 200px;
     background-color: #e8e8e8;
-    padding: 10px;
+    padding: 5px; /* Reduced padding */
     overflow-y: auto;
     transition: width 0.3s ease, opacity 0.3s ease;
     position: relative;
@@ -19,14 +19,14 @@ body {
 }
 
 #chapterContainer[style*="width: 0px"] {
-    opacity: 0; /* Hide the sidebar when collapsed */
-    pointer-events: none; /* Prevent interaction with the hidden sidebar */
-    height: 100vh; /* Ensure the sidebar covers the entire height */
+    opacity: 0;
+    pointer-events: none;
+    height: 100vh;
 }
 
 #chapterTitle {
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 5px; /* Reduced margin */
 }
 
 #sidebar {
@@ -37,14 +37,14 @@ body {
     height: 100vh;
     overflow-y: auto;
     position: relative;
-    transition: width 0.3s;
+    transition: width 0.2s;
     box-shadow: #777 0 0 10px;
 }
 
 #headerContainer {
     display: flex;
-    align-items: center; /* Aligns items vertically in the center */
-    margin-bottom: 10px; /* Adds some space below the header */
+    align-items: center;
+    margin-bottom: 5px; /* Reduced margin */
 }
 
 #toggleSidebar {
@@ -61,8 +61,8 @@ body {
 .chapter {
     display: flex;
     align-items: center;
-    justify-content: flex-start;  /* Align content to the left */
-    padding: 10px;
+    justify-content: flex-start;
+    padding: 8px; /* Reduced padding */
     margin-bottom: 5px;
     cursor: pointer;
     border-radius: 8px;
@@ -73,7 +73,7 @@ body {
 
 .chapter .drag-handle {
     cursor: move;
-    margin-right: 10px;
+    margin-right: 8px;
     color: #888;
 }
 
@@ -96,19 +96,6 @@ body {
     right: 10px;
 }
 
-.chapter input[type="text"] {
-    flex-grow: 1;
-    margin-right: 10px;
-    padding: 5px;
-    border-radius: 3px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-}
-
-.chapter .delete-chapter:hover {
-    color: darkred;
-}
-
 .current-chapter {
     background-color: #4CAF50;
     color: white;
@@ -116,7 +103,7 @@ body {
 
 h1 {
     margin: 0;
-    font-size: 24px;
+    font-size: 20px; /* Reduced font size */
     font-weight: normal;
 }
 
@@ -124,19 +111,19 @@ h1 {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 10px; /* Reduced padding */
     overflow: hidden;
     transition: margin-left 0.3s ease;
 }
 
 #ancestryContainer {
-    margin-bottom: 20px;
+    margin-bottom: 10px; /* Reduced margin */
     font-weight: bold;
 }
 
 .story-node {
-    margin: 10px 0;
-    padding: 10px;
+    margin: 5px 0; /* Reduced margin */
+    padding: 8px; /* Reduced padding */
     background-color: #fff;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -149,7 +136,7 @@ h1 {
 #storyContainer {
     flex-grow: 1;
     overflow-y: auto;
-    padding-bottom: 70px; /* Space for the fixed input at the bottom */
+    padding-bottom: 50px; /* Reduced space for the fixed input at the bottom */
 }
 
 #inputContainer {
@@ -163,16 +150,16 @@ h1 {
 
 #nodeInput {
     flex-grow: 1;
-    padding: 10px;
-    font-size: 16px;
+    padding: 8px; /* Reduced padding */
+    font-size: 14px; /* Reduced font size */
     border: 1px solid #ccc;
     border-radius: 5px;
 }
 
 #addNode {
-    margin-left: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
+    margin-left: 8px;
+    padding: 8px 16px; /* Reduced padding */
+    font-size: 14px; /* Reduced font size */
     background-color: #4CAF50;
     color: white;
     border: none;
@@ -182,19 +169,19 @@ h1 {
 }
 
 #hintContainer {
-    margin-bottom: 5px; /* Space between hints and input */
+    margin-bottom: 5px;
     font-size: 14px;
     color: #777;
 }
 
 .message {
     position: fixed;
-    top: 10px; /* Position message at the top of the page */
+    top: 5px; /* Reduced vertical space */
     left: 50%;
     transform: translateX(-50%);
-    padding: 10px 20px;
+    padding: 8px 16px; /* Reduced padding */
     border-radius: 5px;
-    font-size: 16px;
+    font-size: 14px; /* Reduced font size */
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 1000;
     opacity: 0.9;
