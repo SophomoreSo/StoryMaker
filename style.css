@@ -140,8 +140,15 @@ h1 {
 }
 
 #inputContainer {
-    box-sizing: border-box;
+    position: fixed; /* Fix to the bottom of the viewport */
+    bottom: 0; /* Stick to the bottom */
+    width: 85%; /* Make it stretch across the entire width */
+    background-color: white; /* Ensure the background is visible */
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* Add shadow for visibility */
+    padding: 10px; /* Provide some padding for the input */
+    z-index: 1000; /* Ensure it's on top of other elements */
 }
+
 
 #inputWrapper {
     display: flex;
@@ -158,8 +165,8 @@ h1 {
 
 #addNode {
     margin-left: 8px;
-    padding: 8px 16px; /* Reduced padding */
-    font-size: 14px; /* Reduced font size */
+    padding: 8px 16px;
+    font-size: 14px;
     background-color: #4CAF50;
     color: white;
     border: none;
