@@ -46,10 +46,12 @@ class StoryWriter {
         this.nodeCounter = 0;
         this.nodesSinceLastSave = 0;
         this.unsavedChanges = false;
-        this.commands = ["/new", "/load", "/save", "/delete", "/recent", "/getparent", "/exit", "/chapteradd", "/brainstorm"];
+        this.commands = ["/new", "/load", "/save", "/delete", "/recent", "/getparent", "/exit", "/chapteradd", "/brainstorm", "/previousnode"];
         this.singleHint = null;
         this.messageTimeout = null;
         this.currentMessage = null;
+        this.nodeHistory = [];
+        this.historyLimit = 10;
     }
 
     addNode(text) {
@@ -102,6 +104,9 @@ class StoryWriter {
                 break;
             case '/recent':
                 this.moveToCurrent();
+                break;
+            case '/previousnode':
+                this.moveToPreviousNode();
                 break;
             case '/getparent':
                 this.getAncestryAndCopyToClipboard();
@@ -476,10 +481,44 @@ class StoryWriter {
         this.focusInput();
     }
 
+    pushToHistory() {
+        if (this.currentParent) {
+            this.nodeHistory.push(this.currentParent);
+
+            if (this.nodeHistory.length > this.historyLimit) {
+                this.nodeHistory.shift();
+            }
+        }
+    }
+
+    moveToNodeByReference(node) {
+        if (node) {
+            this.pushToHistory();
+            this.currentParent = node;
+            this.renderStory();
+            this.showMessage(`Moved to node: ${node.getTitle()}`);
+        } else {
+            this.showMessage("Invalid node reference.", true);
+        }
+    }
+
+    moveToPreviousNode() {
+        if (this.nodeHistory.length > 0) {
+            const previousNode = this.nodeHistory.pop();
+            this.currentParent = previousNode;
+            this.renderStory();
+            this.showMessage("Moved to the previous node.");
+        } else {
+            this.showMessage("No previous node to go back to.", true);
+        }
+    }
+
+    // Example method for moving to a new node (push the current node to history)
     moveToNode(index) {
         if (index === 0) {
             const parent = this.findParent(this.currentParent);
             if (parent) {
+                this.pushToHistory(); // Save current node before moving to parent
                 this.currentParent.removeCurrent();
                 this.currentParent = parent;
                 this.currentParent.markCurrent();
@@ -489,6 +528,7 @@ class StoryWriter {
                 this.showMessage("This is the root node, cannot move to a parent.", true);
             }
         } else if (index > 0 && index <= this.currentParent.children.length) {
+            this.pushToHistory(); // Save current node before moving
             this.currentParent.removeCurrent();
             this.currentParent = this.currentParent.children[index - 1];
             this.currentParent.markCurrent();
@@ -500,14 +540,15 @@ class StoryWriter {
         this.focusInput();
     }
 
+
     getAncestry(node) {
         const ancestry = [];
         let current = node;
         while (current) {
-            ancestry.unshift(current.getTitle());
+            ancestry.unshift(current);
             current = this.findParent(current);
         }
-        return ancestry.join(' → ');
+        return ancestry;
     }
 
     findParent(child) {
@@ -535,25 +576,44 @@ class StoryWriter {
     renderStory() {
         const ancestryContainer = document.getElementById('ancestryContainer');
         ancestryContainer.innerHTML = '';
+        
         const ancestry = this.getAncestry(this.currentParent);
-        const ancestryElement = document.createElement('div');
-        ancestryElement.textContent = "Ancestry: " + ancestry;
-        ancestryContainer.appendChild(ancestryElement);
+        ancestry.forEach((node, index) => {
+            const ancestryElement = document.createElement('span');
+            ancestryElement.textContent = node.getTitle();
+            ancestryElement.style.cursor = 'pointer';
+            ancestryElement.addEventListener('click', () => this.moveToNodeByReference(node));
+
+            ancestryContainer.appendChild(ancestryElement);
+            if (index < ancestry.length - 1) {
+                const separator = document.createElement('span');
+                separator.textContent = ' → ';
+                ancestryContainer.appendChild(separator);
+            }
+        });
 
         const storyContainer = document.getElementById('storyContainer');
         storyContainer.innerHTML = '';
         this.renderChildren(this.currentParent, storyContainer);
     }
 
+
     renderChildren(node, container) {
         if (!node) return;
+
         node.children.forEach((child, index) => {
             const nodeElement = document.createElement('div');
             nodeElement.className = 'story-node';
-            if (child.current) {
-                nodeElement.classList.add('current');
-            }
             nodeElement.textContent = `${index + 1}. ${child.getTitle()}`;
+            nodeElement.style.cursor = 'pointer';
+
+            nodeElement.addEventListener('click', () => {
+                this.pushToHistory();
+                this.currentParent = child;
+                this.renderStory();
+                this.showMessage(`Moved to node: ${child.getTitle()}`);
+            });
+
             container.appendChild(nodeElement);
         });
     }
