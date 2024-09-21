@@ -46,7 +46,7 @@ class StoryWriter {
         this.nodeCounter = 0;
         this.nodesSinceLastSave = 0;
         this.unsavedChanges = false;
-        this.commands = ["/new", "/load", "/save", "/delete", "/recent", "/getparent", "/exit", "/chapteradd", "/brainstorm", "/previousnode"];
+        this.commands = ["/new", "/load", "/save", "/delete", "/getparent", "/chapteradd", "/brainstorm", "/previousnode", "/insert", "/dissolve"];
         this.singleHint = null;
         this.messageTimeout = null;
         this.currentMessage = null;
@@ -186,11 +186,15 @@ class StoryWriter {
                 this.addChapter();
                 this.showMessage("New chapter added!");
                 break;
-            case '/recent':
-                this.moveToCurrent();
-                break;
             case '/previousnode':
                 this.moveToPreviousNode();
+                break;
+            case '/insert':
+                const insertText = commandParts.slice(1).join(" ");
+                this.insertNode(insertText);
+                break;
+            case '/dissolve':
+                this.dissolveNode();
                 break;
             case '/getparent':
                 this.getAncestryAndCopyToClipboard();
@@ -199,12 +203,6 @@ class StoryWriter {
             case '/brainstorm':
                 this.copyChildrenToClipboard();
                 this.showMessage("Brainstorm list copied to clipboard!");
-                break;
-            case '/exit':
-                if (this.unsavedChanges && !this.confirmDiscardChanges()) {
-                    return;
-                }
-                this.showMessage("Exit command not implemented in this interface.", true);
                 break;
             default:
                 this.showMessage(`Unknown command: ${command}`, true);
@@ -373,7 +371,88 @@ class StoryWriter {
         });
     }
     
-    
+    insertNode(text) {
+        if (!this.currentParent) {
+            this.showMessage("No parent node exists.", true);
+            return;
+        }
+
+        const newNodeText = text || 'New Inserted Node'; // Use provided text or default to "New Inserted Node"
+        const newNode = new StoryNode(newNodeText);
+        const parent = this.findParent(this.currentParent);
+
+        if (parent) {
+            // Insert new node between parent and current node
+            const index = parent.children.indexOf(this.currentParent);
+            if (index > -1) {
+                // Remove the current node from the parent
+                parent.children.splice(index, 1);
+                // Add the new node as a child of the parent
+                parent.children.splice(index, 0, newNode);
+                // Add the current node as a child of the new node
+                newNode.children.push(this.currentParent);
+
+                // Set the new node as current
+                this.currentParent = newNode;
+                this.unsavedChanges = true;
+                this.renderStory();
+                this.showMessage(`Inserted a new node: ${newNodeText}`);
+            }
+        } else {
+            this.showMessage("Parent not found.", true);
+        }
+    }
+
+    dissolveNode() {
+        if (!this.currentParent) {
+            this.showMessage("No current node exists.", true);
+            return;
+        }
+
+        if (this.currentParent.children.length !== 1) {
+            this.showMessage("Current node must have exactly one child to dissolve.", true);
+            return;
+        }
+
+        const childNode = this.currentParent.children[0];
+        const parent = this.findParent(this.currentParent);
+
+        if (parent) {
+            const index = parent.children.indexOf(this.currentParent);
+            if (index > -1) {
+                parent.children.splice(index, 1);
+                parent.children.splice(index, 0, childNode);
+                this.currentParent = childNode;
+                this.unsavedChanges = true;
+                this.renderStory();
+                this.showMessage("Dissolved the current node.");
+            }
+        } else {
+            this.showMessage("Parent not found.", true);
+        }
+    }
+
+    findParent(child) {
+        for (const node of this.chapters) {
+            if (node.children.includes(child)) {
+                return node;
+            }
+            const parent = this.findParentRecursive(node, child);
+            if (parent) return parent;
+        }
+        return null;
+    }
+
+    findParentRecursive(parent, child) {
+        if (parent.children.includes(child)) {
+            return parent;
+        }
+        for (const node of parent.children) {
+            const result = this.findParentRecursive(node, child);
+            if (result) return result;
+        }
+        return null;
+    }
 
     copyChildrenToClipboard() {
         if (!this.currentParent || this.currentParent.children.length === 0) {
@@ -595,11 +674,6 @@ class StoryWriter {
             }
         };
         reader.readAsText(file);
-    }
-
-    moveToCurrent() {
-        this.showMessage("Move to current feature not implemented yet.", true);
-        this.focusInput();
     }
 
     getAncestryAndCopyToClipboard() {

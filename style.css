@@ -136,6 +136,12 @@ button:hover {
     border: 2px solid #4CAF50; /* Green outline */
 }
 
+.current-chapter .edit-icon, 
+.current-chapter .delete-chapter {
+    visibility: visible;
+    opacity: 1;
+}
+
 h1 {
     /* make centered */
     text-align: center;
