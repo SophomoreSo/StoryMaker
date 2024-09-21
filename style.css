@@ -9,7 +9,7 @@ body {
 }
 
 #chapterContainer {
-    width: 200px;
+    width: 90%;
     background-color: #e8e8e8;
     padding: 5px; /* Reduced padding */
     overflow-y: auto;
@@ -81,16 +81,16 @@ button:hover {
 }
 
 .chapter {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
     padding: 8px;
     margin-bottom: 5px;
     cursor: pointer;
     border-radius: 8px;
     background-color: #fff;
     border: 1px solid #ccc;
-    position: relative;
+    /* eclipse text if too long */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chapter .drag-handle {
@@ -99,12 +99,26 @@ button:hover {
     color: #888;
 }
 
+.chapter .edit-icon, 
+.chapter .delete-chapter {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.2s ease;
+}
+
+/* Show edit and delete buttons on hover */
+.chapter:hover .edit-icon, 
+.chapter:hover .delete-chapter {
+    visibility: visible;
+    opacity: 1;
+}
+
 .chapter .edit-icon {
     width: 16px;
     height: 16px;
     cursor: pointer;
-    margin-right: 10px;
     position: absolute;
+    margin-top: 3px;
     right: 30px;
 }
 
@@ -119,8 +133,6 @@ button:hover {
 }
 
 .current-chapter {
-    background-color: #4CAF50;
-    color: white;
     border: 2px solid #4CAF50; /* Green outline */
 }
 
@@ -161,7 +173,7 @@ h1 {
 
 /* Chapter "+" button */
 #addChapterButton {
-    width: 100%;
+    width: 90%;
     padding: 10px;
     border: none;
     background-color: #4CAF50;
@@ -169,6 +181,7 @@ h1 {
     font-size: 18px;
     cursor: pointer;
     border-radius: 5px;
+    margin-left: 5px;
     margin-top: 10px;
     transition: background-color 0.3s ease;
 }
@@ -198,6 +211,10 @@ h1 {
     background-color: #d0f0d0;
 }
 
+.ancestry-node:hover {
+    background-color: #dcdcdc; /* Darker grey on hover */
+}
+
 .ancestry-node {
     border: 1px solid #ccc;
     border-radius: 10px;
@@ -206,6 +223,7 @@ h1 {
     background-color: #f5f5f5;
     cursor: pointer;
     display: inline-block;
+    transition: background-color 0.3s ease;
 }
 
 #storyContainer {

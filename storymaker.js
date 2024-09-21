@@ -59,9 +59,15 @@ class StoryWriter {
             this.createNewStory(); // Automatically start a new project
         });
 
-        // Focus the text input when "/" is pressed
+        window.addEventListener('beforeunload', (event) => {
+            if (this.unsavedChanges) { 
+                event.preventDefault();
+                event.returnValue = ''; // Trigger a confirmation dialog
+            }
+        });
+
         document.addEventListener('keydown', (event) => {
-            if (event.key === '/') {
+            if (event.key === '/' && document.activeElement !== document.getElementById('nodeInput')) {
                 event.preventDefault(); // Prevent the default "/" behavior
                 const inputField = document.getElementById('nodeInput');
                 if (inputField) {
@@ -227,18 +233,27 @@ class StoryWriter {
     }
 
     addChapter() {
-        const newRootNode = new StoryNode(`Chapter`);
-        this.chapters.push(newRootNode);
-        this.renderChapters();
+        const newChapter = new StoryNode(`Untitled Chapter`);
+        this.chapters.push(newChapter);
+        this.renderChapters(); // Re-render the chapter list
+        this.showMessage("New chapter added!");
+        this.unsavedChanges = true;
     }
 
     selectChapter(index) {
-        if (index >= 0 && index < this.chapters.length) {
-            this.currentChapterIndex = index;
-            this.currentParent = this.chapters[index];
-            this.renderStory();
-            this.showMessage(`Chapter ${index + 1} loaded.`);
+        if (index < 0 || index >= this.chapters.length) return;
+
+        const allChapters = document.querySelectorAll('.chapter');
+        allChapters.forEach(chapter => chapter.classList.remove('current-chapter'));
+
+        this.currentChapterIndex = index;
+        this.currentParent = this.chapters[index];
+        const selectedChapter = allChapters[index];
+        if (selectedChapter) {
+            selectedChapter.classList.add('current-chapter');
         }
+
+        this.renderStory();
     }
 
     deleteChapter(index) {
@@ -300,6 +315,11 @@ class StoryWriter {
             chapterDiv.className = 'chapter';
             chapterDiv.draggable = true;
     
+            // Apply the "current-chapter" class to the selected chapter
+            if (index === this.currentChapterIndex) {
+                chapterDiv.classList.add('current-chapter');
+            }
+    
             const dragHandle = document.createElement('span');
             dragHandle.className = 'drag-handle';
             dragHandle.textContent = '☰';
@@ -314,7 +334,7 @@ class StoryWriter {
     
             const chapterTitle = document.createElement('span');
             chapterTitle.textContent = `${index + 1}. ${chapter.title}`;
-            chapterTitle.addEventListener('click', () => this.selectChapter(index));
+            chapterDiv.addEventListener('click', () => this.selectChapter(index));
     
             const deleteButton = document.createElement('button');
             deleteButton.className = 'delete-chapter';
@@ -349,11 +369,10 @@ class StoryWriter {
                 chapterDiv.style.backgroundColor = ''; 
             });
     
-            // The DragDropTouch polyfill will handle the touch events, no need for manual touch event handlers.
-    
             chapterContainer.appendChild(chapterDiv);
         });
     }
+    
     
 
     copyChildrenToClipboard() {
@@ -866,16 +885,6 @@ document.getElementById('addNode').addEventListener('click', () => {
 document.getElementById('nodeInput').addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         document.getElementById('addNode').click();
-    }
-});
-
-document.addEventListener('keydown', (event) => {
-    if (event.key === '/') {
-        event.preventDefault(); // Prevent the default behavior of "/"
-        const inputField = document.getElementById('nodeInput');
-        if (inputField) {
-            inputField.focus(); // Focus on the input field
-        }
     }
 });
 
