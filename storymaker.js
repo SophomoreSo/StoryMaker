@@ -377,7 +377,7 @@ class StoryWriter {
             return;
         }
 
-        const newNodeText = text || 'New Inserted Node'; // Use provided text or default to "New Inserted Node"
+        const newNodeText = text || 'dummy node';
         const newNode = new StoryNode(newNodeText);
         const parent = this.findParent(this.currentParent);
 
@@ -678,11 +678,15 @@ class StoryWriter {
 
     getAncestryAndCopyToClipboard() {
         const ancestry = this.getAncestry(this.currentParent);
-        navigator.clipboard.writeText(ancestry).then(() => {
+        const ancestryTitles = ancestry.map(node => node.getTitle ? node.getTitle() : node.title || 'Untitled Node');
+        const ancestryText = ancestryTitles.join(' → ');
+        navigator.clipboard.writeText(ancestryText).then(() => {
             this.showMessage("Ancestry copied to clipboard!");
         });
+    
         this.focusInput();
     }
+    
 
     pushToHistory() {
         if (this.currentParent) {
