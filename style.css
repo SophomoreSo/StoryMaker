@@ -60,15 +60,6 @@ body {
     margin-left: 10px; /* Adds space between the button and the title */
 }
 
-button {
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #b3b3b3; /* Greyed background on hover */
-}
-
-
 #toggleSidebar {
     width: 30px;
     height: 30px;
@@ -169,15 +160,68 @@ h1 {
 }
 
 .story-node {
-    margin: 5px 0;
-    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Align content to the left */
+    margin-left: 10px; /* Add some space to the left */
+    padding: 4px 8px; /* Halved padding to reduce size */
     background-color: #fff;
     border: 1px solid #ccc;
     border-radius: 5px;
-    margin-left: 20px;
+    cursor: pointer;
+    width: 100%; /* Set a uniform width for all story nodes */
+    box-sizing: border-box;
+    text-align: left; /* Align text to the left */
+    position: relative;
 }
 
-/* Chapter "+" button */
+/* Title styling inside the story node */
+.story-node span {
+    text-align: left; /* Align text to the left */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px; /* Keep some space between title and buttons */
+}
+
+.story-node:hover {
+    background-color: #e8e8e8;
+}
+
+.story-node.dragging {
+    opacity: 0.5; /* Make the dragged node slightly transparent */
+}
+/* Ensure the current chapter always displays the buttons */
+.current-chapter .rename-node, 
+.current-chapter .delete-node {
+    visibility: visible;
+    opacity: 1;
+}
+
+.rename-node, .delete-node {
+    background-color: transparent;
+    border: none;
+    font-size: 12px; /* Smaller size for the buttons */
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.delete-node:hover {
+    color: red; /* Red for delete */
+}
+
+.drag-handle {
+    margin-right: 10px;
+    font-size: 18px;
+    color: #888;
+    cursor: move;
+}
+
 #addChapterButton {
     width: 90%;
     padding: 10px;

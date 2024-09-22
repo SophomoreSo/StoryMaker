@@ -798,17 +798,18 @@ class StoryWriter {
     }
 
     renderStory() {
+        // Render ancestry nodes
         const ancestryContainer = document.getElementById('ancestryContainer');
         ancestryContainer.innerHTML = '';
-        
+    
         const ancestry = this.getAncestry(this.currentParent);
         ancestry.forEach((node, index) => {
             const ancestryElement = document.createElement('span');
             ancestryElement.textContent = node.getTitle();
             ancestryElement.classList.add('ancestry-node');
-
+    
             ancestryElement.addEventListener('click', () => this.moveToNodeByReference(node));
-
+    
             ancestryContainer.appendChild(ancestryElement);
             if (index < ancestry.length - 1) {
                 const separator = document.createElement('span');
@@ -816,31 +817,94 @@ class StoryWriter {
                 ancestryContainer.appendChild(separator);
             }
         });
-
+    
+        // Render story nodes (children)
         const storyContainer = document.getElementById('storyContainer');
-        storyContainer.innerHTML = '';
+        storyContainer.innerHTML = ''; // Clear current story nodes
+    
         this.renderChildren(this.currentParent, storyContainer);
     }
 
 
     renderChildren(node, container) {
-        if (!node) return;
-
-        node.children.forEach((child, index) => {
+        node.children.forEach((childNode, index) => {
             const nodeElement = document.createElement('div');
             nodeElement.className = 'story-node';
-            nodeElement.textContent = `${index + 1}. ${child.getTitle()}`;
-            nodeElement.style.cursor = 'pointer';
+            nodeElement.draggable = true; // Make the node draggable
+    
+            // Create the drag handle (☰)
+            const dragHandle = document.createElement('span');
+            dragHandle.className = 'drag-handle';
+            dragHandle.textContent = '☰';
+    
+            // Create the story node title element
+            const titleElement = document.createElement('span');
+            titleElement.textContent = `${index + 1}. ${childNode.getTitle()}`;
+            nodeElement.addEventListener('click', () => this.moveToNodeByReference(childNode));
+    
+            const renameButton = document.createElement('img');
+            renameButton.src = 'edit.png';
+            renameButton.className = 'rename-node';
 
-            nodeElement.addEventListener('click', () => {
-                this.pushToHistory();
-                this.currentParent = child;
-                this.renderStory();
-                this.showMessage(`Moved to node: ${child.getTitle()}`);
+            renameButton.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent triggering the click event for moving to the node
+                this.showRenameInput(childNode);
             });
+    
+            // Create the delete button (x)
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-node';
+            deleteButton.textContent = 'x';
+            deleteButton.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent triggering the click event for moving to the node
+                this.deleteNode(childNode);
+            });
+    
+            // Add the elements to the node element
+            nodeElement.appendChild(dragHandle);
+            nodeElement.appendChild(renameButton);
+            nodeElement.appendChild(deleteButton);
+            nodeElement.appendChild(titleElement);
 
+    
+            // Handle drag start
+            nodeElement.addEventListener('dragstart', (event) => {
+                event.dataTransfer.setData('text/plain', index); // Store the index of the dragged node
+            });
+    
+            // Handle drag over (necessary to allow dropping)
+            nodeElement.addEventListener('dragover', (event) => {
+                event.preventDefault(); // Necessary to allow a drop
+                nodeElement.style.backgroundColor = '#f0f0f0'; // Highlight drop target
+            });
+    
+            // Handle drag leave (reset the background)
+            nodeElement.addEventListener('dragleave', () => {
+                nodeElement.style.backgroundColor = ''; // Reset the background
+            });
+    
+            // Handle drop
+            nodeElement.addEventListener('drop', (event) => {
+                event.preventDefault();
+                const fromIndex = event.dataTransfer.getData('text/plain');
+                this.swapStoryNodes(parseInt(fromIndex), index); // Swap nodes
+                nodeElement.style.backgroundColor = ''; // Reset the background
+            });
+    
             container.appendChild(nodeElement);
         });
+    }
+
+    swapStoryNodes(fromIndex, toIndex) {
+        if (fromIndex === toIndex) return; // No need to swap if the indices are the same
+    
+        const temp = this.currentParent.children[fromIndex];
+        this.currentParent.children[fromIndex] = this.currentParent.children[toIndex];
+        this.currentParent.children[toIndex] = temp;
+    
+        this.unsavedChanges = true;
+        this.renderStory(); // Re-render the story nodes
+        this.showMessage(`Swapped node ${fromIndex + 1} with node ${toIndex + 1}`);
     }
 
     updateHints(inputValue) {
